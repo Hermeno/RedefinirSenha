@@ -2,87 +2,34 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
   <title>Redefinir Senha</title>
   <style>
-    body {
-      display: flex; 
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      margin: 0;
-      font-family: sans-serif;
-      background: #f0f2f5;
-    }
-    .container {
-      background: #fff;
-      padding: 24px;
-      border-radius: 8px;
-      box-shadow: 0 2px 12px rgba(0,0,0,0.1);
-      width: 100%;
-      max-width: 360px;
-      text-align: center;
-    }
-    h1 {
-      margin-bottom: 16px;
-      font-size: 1.4rem;
-      color: #333;
-    }
-    input {
-      width: 100%;
-      padding: 10px;
-      margin-bottom: 12px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      font-size: 1rem;
-    }
-    button {
-      width: 100%;
-      padding: 12px;
-      background: #1976d2;
-      color: #fff;
-      border: none;
-      border-radius: 4px;
-      font-size: 1rem;
-      cursor: pointer;
-    }
-    button:disabled {
-      background: #90caf9;
-      cursor: default;
-    }
-    .msg {
-      margin-top: 12px;
-      font-size: 0.9rem;
-    }
-    .error {
-      color: #d32f2f;
-    }
-    .success {
-      color: #388e3c;
-    }
+    /* ... seu CSS existente ... */
+    .msg { margin-top: 12px; font-size: 0.9rem; }
+    .error { color: #d32f2f; }
+    .success { color: #388e3c; }
   </style>
 </head>
 <body>
   <div class="container">
     <h1>Redefinir Senha</h1>
     <form id="resetForm">
-      <input type="hidden" id="token" />
       <input type="password" id="newPassword" placeholder="Nova senha" required minlength="6" />
       <button type="submit">Confirmar</button>
     </form>
     <div id="message" class="msg"></div>
   </div>
 
-
-<script>
+  <script>
   document.addEventListener('DOMContentLoaded', () => {
     const formEl = document.getElementById('resetForm');
+    const newPasswordEl = document.getElementById('newPassword');
     const messageEl = document.getElementById('message');
 
-    // Token = parte da URL após a primeira barra
-    let token = window.location.pathname.replace(/^\/+|\/+$/g, '');
+    // Pega o token da URL
+    const token = window.location.pathname.replace(/^\/+|\/+$/g, '');
 
-    // Se não tiver token, oculta o form e exibe mensagem
     if (!token) {
       formEl.style.display = 'none';
       messageEl.innerText = 'Token inválido ou ausente.';
@@ -98,32 +45,44 @@
       messageEl.className = 'msg';
 
       try {
+        const newPassword = newPasswordEl.value;
         const res = await fetch('https://api-com-nodejs-express-mongodb-prisma.onrender.com/redefinir-senha', {
-
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ token, newPassword })
         });
-        
+
         console.log('Status:', res.status);
-        
         const text = await res.text();
-        console.log('Resposta do backend (raw):', JSON.stringify(text));
-        
+        console.log('Resposta raw:', text);
+
+        if (!text) throw new Error('Resposta vazia do servidor');
+
         let json;
         try {
-          json = text ? JSON.parse(text) : null;
+          json = JSON.parse(text);
         } catch (e) {
-          console.error('Falha ao fazer parse do JSON:', e);
+          throw new Error('Resposta inválida: ' + e.message);
+        }
+
+        if (res.ok) {
+          messageEl.innerText = json.message || 'Senha redefinida com sucesso!';
+          messageEl.classList.add('success');
+          // Opcional: redirecionar após sucesso
+          // setTimeout(() => window.location.href = '/login', 2000);
+        } else {
+          throw new Error(json.error || `Erro (${res.status})`);
         }
       } catch (err) {
+        console.error(err);
         messageEl.innerText = err.message;
         messageEl.classList.add('error');
       } finally {
         btn.disabled = false;
+        newPasswordEl.value = '';
       }
     });
   });
-</script>
+  </script>
 </body>
 </html>

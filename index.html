@@ -99,20 +99,22 @@
 
       try {
         const res = await fetch('https://api-com-nodejs-express-mongodb-prisma.onrender.com/redefinir-senha', {
+
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            token,
-            newPassword: document.getElementById('newPassword').value
-          })
+          body: JSON.stringify({ token, newPassword })
         });
-
-        const json = await res.json();
-        if (res.ok) {
-          messageEl.innerText = json.message || 'Senha redefinida com sucesso!';
-          messageEl.classList.add('success');
-        } else {
-          throw new Error(json.error || 'Falha ao redefinir senha.');
+        
+        console.log('Status:', res.status);
+        
+        const text = await res.text();
+        console.log('Resposta do backend (raw):', JSON.stringify(text));
+        
+        let json;
+        try {
+          json = text ? JSON.parse(text) : null;
+        } catch (e) {
+          console.error('Falha ao fazer parse do JSON:', e);
         }
       } catch (err) {
         messageEl.innerText = err.message;

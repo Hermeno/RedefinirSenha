@@ -6,7 +6,7 @@
   <title>Redefinir Senha</title>
   <style>
     body {
-      display: flex;
+      display: flex; 
       justify-content: center;
       align-items: center;
       height: 100vh;
@@ -73,40 +73,46 @@
     <div id="message" class="msg"></div>
   </div>
 
-  <script>
-    // Extrai token da URL: exemplo: ?token=ABC
-    const params = new URLSearchParams(window.location.search);
-    const token = params.get('token');
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const formEl = document.getElementById('resetForm');
+    const messageEl = document.getElementById('message');
+
+    // Token = parte da URL após a primeira barra
+    let token = window.location.pathname.replace(/^\/+|\/+$/g, '');
+
+    // Se não tiver token, oculta o form e exibe mensagem
     if (!token) {
-      document.getElementById('resetForm').style.display = 'none';
-      document.getElementById('message').innerText = 'Token não fornecido.';
-      document.getElementById('message').classList.add('error');
-    } else {
-      document.getElementById('token').value = token;
+      formEl.style.display = 'none';
+      messageEl.innerText = 'Token inválido ou ausente.';
+      messageEl.classList.add('error');
+      return;
     }
 
-    document.getElementById('resetForm').addEventListener('submit', async e => {
+    formEl.addEventListener('submit', async (e) => {
       e.preventDefault();
-      const btn = e.target.querySelector('button');
+      const btn = formEl.querySelector('button');
       btn.disabled = true;
-      const messageEl = document.getElementById('message');
       messageEl.innerText = '';
       messageEl.className = 'msg';
+
       try {
         const res = await fetch('/redefinir-senha', {
           method: 'POST',
-          headers: {'Content-Type': 'application/json'},
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             token,
             newPassword: document.getElementById('newPassword').value
           })
         });
+
         const json = await res.json();
         if (res.ok) {
-          messageEl.innerText = json.message || 'Senha redefinida com sucesso.';
+          messageEl.innerText = json.message || 'Senha redefinida com sucesso!';
           messageEl.classList.add('success');
         } else {
-          throw new Error(json.error || 'Erro ao redefinir.');
+          throw new Error(json.error || 'Falha ao redefinir senha.');
         }
       } catch (err) {
         messageEl.innerText = err.message;
@@ -115,6 +121,7 @@
         btn.disabled = false;
       }
     });
-  </script>
+  });
+</script>
 </body>
 </html>

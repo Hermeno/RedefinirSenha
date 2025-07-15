@@ -5,84 +5,111 @@
   <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
   <title>Redefinir Senha</title>
   <style>
-    /* ... seu CSS existente ... */
-    .msg { margin-top: 12px; font-size: 0.9rem; }
-    .error { color: #d32f2f; }
-    .success { color: #388e3c; }
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+    body {
+      display: flex; align-items: center; justify-content: center;
+      min-height: 100vh; background: linear-gradient(135deg, #667eea, #764ba2);
+    }
+    .container {
+      background: rgba(255,255,255,0.2);
+      backdrop-filter: blur(20px);
+      border-radius: 12px; padding: 40px;
+      max-width: 360px; width: 90%;
+      color: #fff; text-align: center;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+    }
+    h1 {
+      font-size: 1.8rem; margin-bottom: 16px;
+      font-weight: 600;
+    }
+    input {
+      width: 100%; padding: 12px 16px;
+      margin-bottom: 20px;
+      border: none; border-radius: 8px;
+      background: rgba(255,255,255,0.3);
+      color: #fff; font-size: 1rem;
+      outline: none;
+    }
+    input::placeholder {
+      color: rgba(255,255,255,0.8);
+    }
+    button {
+      width: 100%; padding: 14px;
+      border: none; border-radius: 8px;
+      background: #ff7fbf;
+      font-size: 1rem; font-weight: 600;
+      cursor: pointer; transition: background 0.3s;
+      color: #fff;
+    }
+    button:hover { background: #ff92c0; }
+    .msg {
+      margin-top: 16px;
+      font-size: 0.9rem;
+    }
+    .msg.error { color: #ff6b6b; }
+    .msg.success { color: #7bed9f; }
   </style>
 </head>
 <body>
   <div class="container">
     <h1>Redefinir Senha</h1>
     <form id="resetForm">
-      <input type="password" id="newPassword" placeholder="Nova senha" required minlength="6" />
+      <input type="password" id="newPassword" placeholder="Nova senha" minlength="6" required />
       <button type="submit">Confirmar</button>
     </form>
     <div id="message" class="msg"></div>
   </div>
 
   <script>
-  document.addEventListener('DOMContentLoaded', () => {
-    const formEl = document.getElementById('resetForm');
-    const newPasswordEl = document.getElementById('newPassword');
-    const messageEl = document.getElementById('message');
+    document.addEventListener('DOMContentLoaded', () => {
+      const formEl = document.getElementById('resetForm');
+      const pwEl = document.getElementById('newPassword');
+      const msgEl = document.getElementById('message');
+      const token = window.location.pathname.replace(/^\/+|\/+$/g, '');
 
-    // Pega o token da URL
-    const token = window.location.pathname.replace(/^\/+|\/+$/g, '');
-
-    if (!token) {
-      formEl.style.display = 'none';
-      messageEl.innerText = 'Token inválido ou ausente.';
-      messageEl.classList.add('error');
-      return;
-    }
-
-    formEl.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const btn = formEl.querySelector('button');
-      btn.disabled = true;
-      messageEl.innerText = '';
-      messageEl.className = 'msg';
-
-      try {
-        const newPassword = newPasswordEl.value;
-        const res = await fetch('https://api-com-nodejs-express-mongodb-prisma.onrender.com/redefinir-senha', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ token, newPassword })
-        });
-
-        console.log('Status:', res.status);
-        const text = await res.text();
-        console.log('Resposta raw:', text);
-
-        if (!text) throw new Error('Resposta vazia do servidor');
-
-        let json;
-        try {
-          json = JSON.parse(text);
-        } catch (e) {
-          throw new Error('Resposta inválida: ' + e.message);
-        }
-
-        if (res.ok) {
-          messageEl.innerText = json.message || 'Senha redefinida com sucesso!';
-          messageEl.classList.add('success');
-          // Opcional: redirecionar após sucesso
-          // setTimeout(() => window.location.href = '/login', 2000);
-        } else {
-          throw new Error(json.error || `Erro (${res.status})`);
-        }
-      } catch (err) {
-        console.error(err);
-        messageEl.innerText = err.message;
-        messageEl.classList.add('error');
-      } finally {
-        btn.disabled = false;
-        newPasswordEl.value = '';
+      if (!token) {
+        formEl.style.display = 'none';
+        msgEl.innerText = 'Token inválido ou ausente.';
+        msgEl.classList.add('error');
+        return;
       }
+
+      formEl.addEventListener('submit', async e => {
+        e.preventDefault();
+        const btn = formEl.querySelector('button');
+        btn.disabled = true;
+        msgEl.className = 'msg';
+        msgEl.innerText = '';
+
+        try {
+          const res = await fetch('https://api-com-nodejs-express-mongodb-prisma.onrender.com/redefinir-senha', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token, newPassword: pwEl.value })
+          });
+          const text = await res.text();
+
+          if (!text) throw new Error(`Resposta vazia (status ${res.status})`);
+          let json;
+          try { json = JSON.parse(text); } catch (err) { throw new Error('Resposta mal formatada'); }
+
+          if (res.ok) {
+            msgEl.innerText = json.message || 'Senha redefinida com sucesso!';
+            msgEl.classList.add('success');
+          } else {
+            throw new Error(json.error || `Erro ${res.status}`);
+          }
+        } catch (err) {
+          console.error(err);
+          msgEl.innerText = err.message;
+          msgEl.classList.add('error');
+        } finally {
+          btn.disabled = false;
+          pwEl.value = '';
+        }
+      });
     });
-  });
   </script>
 </body>
 </html>

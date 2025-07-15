@@ -98,7 +98,7 @@
       messageEl.className = 'msg';
 
       try {
-        const res = await fetch('/redefinir-senha', {
+        const res = await fetch('https://api-com-nodejs-express-mongodb-prisma.onrender.com/redefinir-senha', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
